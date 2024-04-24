@@ -231,9 +231,9 @@ class MarkdownConverter(object):
                 and not title
                 and not self.options['default_title']):
             # Shortcut syntax
-            return '<%s>' % href
+            return '<%s>' % (href if not self.options['replace_urls'] else 'URL')
         if self.options['default_title'] and not title:
-            title = href
+            title = href if not self.options['replace_urls'] else 'URL'
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
 
         if self.options['replace_urls']:
@@ -292,7 +292,7 @@ class MarkdownConverter(object):
 
     def convert_img(self, el, text, convert_as_inline):
         alt = el.attrs.get('alt', None) or ''
-        src = (el.attrs.get('src', None) or '') if self.options['replace_urls'] else 'URL'
+        src = (el.attrs.get('src', None) or '') if not self.options['replace_urls'] else 'URL'
         title = el.attrs.get('title', None) or ''
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
         if (convert_as_inline
