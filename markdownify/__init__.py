@@ -292,8 +292,15 @@ class MarkdownConverter(object):
 
     def convert_img(self, el, text, convert_as_inline):
         alt = el.attrs.get('alt', None) or ''
+        if 'http' in alt:
+            alt = ''
+
         src = (el.attrs.get('src', None) or '') if not self.options['replace_urls'] else 'URL'
+
         title = el.attrs.get('title', None) or ''
+        if 'http' in title:
+            title = ''
+
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
         if (convert_as_inline
                 and el.parent.name not in self.options['keep_inline_images_in']):
