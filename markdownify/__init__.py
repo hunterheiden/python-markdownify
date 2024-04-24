@@ -220,24 +220,16 @@ class MarkdownConverter(object):
         return '%s\n%s\n\n' % (text, pad_char * len(text)) if text else ''
 
     def convert_a(self, el, text, convert_as_inline):
-        prefix, suffix, text = chomp(text)
-        if not text:
-            return ''
-        href = 'URL' if self.options['replace_urls'] else el.get('href')
-        title = el.get('title')
-        # For the replacement see #29: text nodes underscores are escaped
-        if (self.options['autolinks']
-                and text.replace(r'\_', '_') == href
-                and not title
-                and not self.options['default_title']):
-            # Shortcut syntax
-            return '<%s>' % href
-        if self.options['default_title'] and not title:
-            title = 'URL'
-        title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
+        # Use a helper function to remove URLs
+        def remove_url(text):
+            return re.sub(r'https?://\S+', '', text)
 
-        return '%s[%s](%s%s)%s' % (prefix, text, href, title_part, suffix) if href else text
+        href = 'URL' if self.options['replace_urls'] else remove_url(el.get('href', ''))
+        title = remove_url(el.get('title', ''))
 
+        # Format the title part
+        title_part = f' "{title}"' if title else ''
+        return f'[{text}]({href}{title_part})'
 
     convert_b = abstract_inline_conversion(lambda self: 2 * self.options['strong_em_symbol'])
 
@@ -289,20 +281,19 @@ class MarkdownConverter(object):
     convert_i = convert_em
 
     def convert_img(self, el, text, convert_as_inline):
-        # Function to remove URLs from text
         def remove_url(text):
-            return re.sub(r'http[s]?://\S+', 'URL', text)
+            return re.sub(r'https?://\S+', '', text)  # Regex to remove URLs
 
-        alt = remove_url(el.attrs.get('alt', '')) if self.options['replace_urls'] else el.attrs.get('alt', '')
+        # Remove URLs from alt and title
+        alt = remove_url(el.attrs.get('alt', ''))
+        title = remove_url(el.attrs.get('title', ''))
+
+        # Handle src attribute
         src = 'URL' if self.options['replace_urls'] else remove_url(el.attrs.get('src', ''))
-        title = remove_url(el.attrs.get('title', '')) if self.options['replace_urls'] else el.attrs.get('title', '')
 
-        title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
-        if (convert_as_inline
-                and el.parent.name not in self.options['keep_inline_images_in']):
-            return alt
+        title_part = f' "{title}"' if title else ''
+        return f'![{alt}]({src}{title_part})'
 
-        return '![%s](%s%s)' % (alt, src, title_part)
 
     def convert_list(self, el, text, convert_as_inline):
 
