@@ -75,6 +75,7 @@ class MarkdownConverter(object):
         heading_style = UNDERLINED
         keep_inline_images_in = []
         newline_style = SPACES
+        replace_urls = True
         strip = None
         strong_em_symbol = ASTERISK
         sub_symbol = ''
@@ -234,6 +235,10 @@ class MarkdownConverter(object):
         if self.options['default_title'] and not title:
             title = href
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
+
+        if self.options['replace_urls']:
+            return '%s[%s](%s%s)%s' % (prefix, text, 'URL', title_part, suffix) if href else text
+
         return '%s[%s](%s%s)%s' % (prefix, text, href, title_part, suffix) if href else text
 
     convert_b = abstract_inline_conversion(lambda self: 2 * self.options['strong_em_symbol'])
@@ -287,7 +292,7 @@ class MarkdownConverter(object):
 
     def convert_img(self, el, text, convert_as_inline):
         alt = el.attrs.get('alt', None) or ''
-        src = el.attrs.get('src', None) or ''
+        src = (el.attrs.get('src', None) or '') if self.options['replace_urls'] else 'URL'
         title = el.attrs.get('title', None) or ''
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
         if (convert_as_inline
