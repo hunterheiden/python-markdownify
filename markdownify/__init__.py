@@ -223,7 +223,7 @@ class MarkdownConverter(object):
         prefix, suffix, text = chomp(text)
         if not text:
             return ''
-        href = el.get('href')
+        href = 'URL' if self.options['replace_urls'] else el.get('href')
         title = el.get('title')
         # For the replacement see #29: text nodes underscores are escaped
         if (self.options['autolinks']
@@ -231,15 +231,13 @@ class MarkdownConverter(object):
                 and not title
                 and not self.options['default_title']):
             # Shortcut syntax
-            return '<%s>' % (href if not self.options['replace_urls'] else 'URL')
+            return '<%s>' % href
         if self.options['default_title'] and not title:
-            title = href if not self.options['replace_urls'] else 'URL'
+            title = 'URL'
         title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
 
-        if self.options['replace_urls']:
-            return '%s[%s](%s%s)%s' % (prefix, text, 'URL', title_part, suffix) if href else text
-
         return '%s[%s](%s%s)%s' % (prefix, text, href, title_part, suffix) if href else text
+
 
     convert_b = abstract_inline_conversion(lambda self: 2 * self.options['strong_em_symbol'])
 
